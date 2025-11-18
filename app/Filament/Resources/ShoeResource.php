@@ -2,16 +2,27 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\ShoeResource\Pages;
-use App\Filament\Resources\ShoeResource\RelationManagers;
-use App\Models\Shoe;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
+use App\Models\Shoe;
 use Filament\Tables;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Filament\Resources\Resource;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Forms\Components\FileUpload;
 use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Resources\ShoeResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\ShoeResource\RelationManagers;
+use Filament\Tables\Columns\TextInputColumn;
+use Filament\Tables\Filters\SelectFilter;
 
 class ShoeResource extends Resource
 {
@@ -23,7 +34,57 @@ class ShoeResource extends Resource
     {
         return $form
             ->schema([
-                //
+                Fieldset::make('Details')
+                    ->schema([
+                        TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
+                        TextInput::make('price')
+                            ->required()
+                            ->numeric()
+                            ->prefix('IDR'),
+                        FileUpload::make('thumbnail')
+                            ->image()
+                            ->required(),
+                        Repeater::make('photos')
+                            ->relationship('photos')
+                            ->schema([
+                                FileUpload::make('photo')
+                                    ->required(),
+                            ]),
+                        Repeater::make('sizes')
+                            ->relationship('sizes')
+                            ->schema([
+                                TextInput::make('size')
+                                    ->required(),
+                            ]),
+                    ]),
+
+                Fieldset::make('Additional')
+                    ->schema([
+                        Textarea::make('about')
+                            ->required(),
+                        Select::make('is_popular')
+                            ->options([
+                                true => 'Popular',
+                                false => 'Not Popular',
+                            ])
+                            ->required(),
+                        Select::make('category_id')
+                            ->relationship('category', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+                        Select::make('brand_id')
+                            ->relationship('brand', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+                        TextInput::make('stock')
+                            ->required()
+                            ->numeric()
+                            ->prefix('Qty'),
+                    ]),
             ]);
     }
 
@@ -31,13 +92,25 @@ class ShoeResource extends Resource
     {
         return $table
             ->columns([
-                //
+                TextColumn::make('name'),
+                TextColumn::make('category.name'),
+                ImageColumn::make('thumbnail'),
+                IconColumn::make('is_popular')
+                    ->label('Popular')
+                    ->boolean()
+                    ->trueColor('success')
+                    ->falseColor('danger')
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle'),
             ])
             ->filters([
-                //
+                SelectFilter::make('category_id')
+                    ->relationship('category', 'name')
+                    ->label('Category'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

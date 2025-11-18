@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ShoeSize extends Model
@@ -11,4 +12,9 @@ class ShoeSize extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = ['size', 'shoe_id'];
+
+    public function shoe(): BelongsTo
+    {
+        return $this->belongsTo(Shoe::class, 'shoe_id');
+    }
 }
